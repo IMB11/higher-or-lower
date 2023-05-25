@@ -33,7 +33,7 @@ class Card {
 }
 
 interface Game {
-  currentStage: "none" | "player-creation" | "gameplay";
+  currentStage: "none" | "player-creation" | "gameplay" | "game-over";
   currentCard: Card | undefined;
   previousCard: Card | undefined;
   money: number;
@@ -86,8 +86,7 @@ export default defineComponent({
     },
     continueAfterWinningBet(): void {
       this.currentBet.wonPrevious = false;
-      this.currentBet.value = 1;
-      this.previousCard = undefined;
+      this.canPlayerBet = true;
     },
     showNextCard(): void {
       this.previousCard = this.currentCard;
@@ -103,6 +102,14 @@ export default defineComponent({
 
           this.money += this.currentBet.value;
           this.currentBet.wonPrevious = true;
+
+          if (this.money < 1 || this.cards.length == 0) {
+            this.currentStage = "game-over"
+            this.cards.forEach(card => card.show())
+            return;
+          }
+
+          return;
         }
         if (this.currentCard.value < this.previousCard.value && !this.currentBet.nextCardHigher) {
           if (this.previousCard.bonus) {
@@ -113,7 +120,20 @@ export default defineComponent({
 
           this.money += this.currentBet.value;
           this.currentBet.wonPrevious = true;
+
+          if (this.money < 1 || this.cards.length == 0) {
+            this.currentStage = "game-over"
+            this.cards.forEach(card => card.show())
+            return;
+          }
+
+          return;
         }
+      }
+
+      if (this.money < 1 || this.cards.length == 0) {
+        this.currentStage = "game-over"
+        this.cards.forEach(card => card.show())
         return;
       }
 
@@ -186,23 +206,22 @@ export default defineComponent({
         <input v-model="currentBet.value" min="1" :max="money" type="number" />
         <h5>Higher Or Lower?</h5>
         <div class="higherLowerToggle">
-          Higher<label class="switch">
-            <input type="checkbox">
+          Lower<label class="switch">
+            <input v-model="currentBet.nextCardHigher" type="checkbox">
             <span class="slider"></span>
           </label>
-          Lower
+          Higher
         </div>
         <br />
         <button @click="submitBet">Submit Bet</button>
       </div>
 
-      <div v-if="(!canPlayerBet && currentBet.value != -1)">
+      <div v-if="!canPlayerBet && currentBet.value != -1">
         <div v-if="currentBet.wonPrevious">
           <h4>You won your bet!</h4>
-          <p>You bet <strong>£{{ currentBet.value }}</strong> that the next card will be <strong>{{
+          <p>You bet that the next card will be <strong>{{
             currentBet.nextCardHigher ? 'higher' : 'lower' }}</strong>.</p>
-          <p>You were right.</p>
-          <p><strong>£{{ previousCard?.bonus ? currentBet.value * 2 : currentBet.value }}</strong> has been added into your balance.</p>
+          <p><strong>£{{ currentBet.value }}</strong> has been added into your balance.</p>
           <button @click="continueAfterWinningBet">Continue</button>
         </div>
         <div v-else>
@@ -231,6 +250,45 @@ export default defineComponent({
     <p>Please enter your name.</p>
     <input v-model="playerName" type="text" />
     <button @click="setPlayerName">Continue</button>
+  </div>
+  <div v-if="currentStage === 'game-over'">
+    <h3>Game Over</h3>
+    <div v-if="cards.length == 0">
+      <p>You emptied the deck!</p>
+      <p>Your final balance was <strong>£{{ money }}</strong></p>
+    </div>
+    <div v-else>
+      <p>You ran out of money...</p>
+      <p>You had <strong>{{ cards.length }}</strong> cards left in the deck.</p>
+      <div class="deck">
+        <div>
+          <h4>Previous Card</h4>
+          <div class="card" v-if="previousCard">
+            <h1>{{ previousCard.value }}{{ previousCard.bonus ? "*" : "" }}</h1>
+          </div>
+          <div class="card" v-else></div>
+        </div>
+        <div>
+          <h4>Current Card</h4>
+          <div class="card" v-if="currentCard">
+            <h1>{{ currentCard.value }}{{ currentCard.bonus ? "*" : "" }}</h1>
+          </div>
+          <div class="card" v-else></div>
+        </div>
+      </div>
+      <h4>Deck</h4>
+        <transition-group class="deck" name="player" tag="div">
+          <div v-for="card in cards.slice().reverse()">
+            <div class="card" v-if="card.hidden">
+              <small>{{ cards.indexOf(card) }}</small>
+              <h1>?</h1>
+            </div>
+            <div class="card" v-else>
+              <h1>{{ card.value }}{{ card.bonus ? "*" : "" }}</h1>
+            </div>
+          </div>
+        </transition-group>
+    </div>
   </div>
 </template>
 
