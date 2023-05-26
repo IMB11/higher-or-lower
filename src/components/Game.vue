@@ -45,18 +45,20 @@ interface Game {
 }
 
 function shuffle(array: any[]): any[] {
-  let currentIndex = array.length, randomIndex;
+  for (let index = 0; index < 5; index++) {
+    let currentIndex = array.length, randomIndex;
 
-  // While there remain elements to shuffle.
-  while (currentIndex != 0) {
+    // While there remain elements to shuffle.
+    while (currentIndex != 0) {
 
-    // Pick a remaining element.
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
+      // Pick a remaining element.
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
 
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
   }
 
   return array;
@@ -260,6 +262,14 @@ export default defineComponent({
     <div v-else>
       <p>You ran out of money...</p>
       <p>You had <strong>{{ cards.length }}</strong> cards left in the deck.</p>
+      <h4>Deck</h4>
+      <transition-group class="deck" name="player" tag="div">
+        <div v-for="card in cards.slice().reverse()">
+          <div class="card-dead">
+            <h1>{{ card.getValue() }}</h1>
+          </div>
+        </div>
+      </transition-group>
       <div class="deck">
         <div>
           <h4>Previous Card</h4>
@@ -276,18 +286,6 @@ export default defineComponent({
           <div class="card" v-else></div>
         </div>
       </div>
-      <h4>Deck</h4>
-        <transition-group class="deck" name="player" tag="div">
-          <div v-for="card in cards.slice().reverse()">
-            <div class="card" v-if="card.hidden">
-              <small>{{ cards.indexOf(card) }}</small>
-              <h1>?</h1>
-            </div>
-            <div class="card" v-else>
-              <h1>{{ card.value }}{{ card.bonus ? "*" : "" }}</h1>
-            </div>
-          </div>
-        </transition-group>
     </div>
   </div>
 </template>
@@ -322,9 +320,20 @@ export default defineComponent({
   height: 190px;
 }
 
+.card-dead {
+  border-color: black;
+  border-style: solid;
+  display: flex;
+  width: 60px !important;
+  height: 95px !important; 
+}
+
 .card>h1,
 .card>h2,
-.card>h3 {
+.card>h3,
+.card-dead>h1,
+.card-dead>h2,
+.card-dead>h3 {
   text-align: center;
   margin: auto;
 }
