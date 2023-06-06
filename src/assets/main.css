@@ -7,8 +7,6 @@ body {
   font-weight: normal;
 }
 
-/* Betting Section */
-
 /* 
   Make the div containing the checkboxes 
   align children vertically instead of 
@@ -19,5 +17,39 @@ body {
   flex-direction: column;
 }
 
-/* Card */
+/*
+  CARDS
+  =====
+*/
 
+.card-row,
+.row {
+  display: flex;
+  /* Don't show a scrollbar if the cards go off the page. */
+  overflow-x: hidden;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  /* Center all text in the cards vertically. */
+  display: flex;
+  width: 120px;
+  border-color: black;
+  background-color: #b1ff9c;
+  border-style: solid;
+  height: 190px;
+}
+
+/* If the card is from the upper deck, override background colour of the original card class. */
+.card-upper-deck {
+  background-color: #ffa39e !important;
+}
+
+/* Center all text in cards horizontally. */
+.card > h1,
+.card > h2,
+.card > h3 {
+  text-align: center;
+  margin: auto;
+}

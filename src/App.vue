@@ -4,7 +4,7 @@ import GameComponent from "./components/GameComponent.vue";
 
 export default defineComponent({
   components: {
-    Game: GameComponent,
+    GameComponent,
   },
 });
 </script>

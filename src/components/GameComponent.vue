@@ -2,59 +2,62 @@
 import type Bet from "../bet";
 import Card from "../card";
 
-import {Component, Vue} from 'vue-facing-decorator'
+import { Component, Vue, Hook } from "vue-facing-decorator";
 
-enum GameStage {
-  Welcome = "welcome",
-  PlayerCreation = "player-creation",
-  Gameplay = "gameplay",
-  GameOver = "gameover"
-}
+import GameInformation from "./GameInformation.vue";
+import BetInput from "./BetInput.vue";
 
-@Component({})
+type GameStage = "welcome" | "player-creation" | "gameplay" | "gameover";
+
+@Component({
+  // Mark other classes/components here so we aggregate them.
+  components: {
+    GameInformation,
+    BetInput,
+  },
+})
 export default class Game extends Vue {
-  private currentStage!: GameStage;
+  currentStage: GameStage = "welcome";
 
-  private currentCard!: Card;
-  private previousCard!: Card;
-  private money!: number;
+  // A card of -1 is used to show that the variable isn't being used.
+  currentCard: Card = new Card(-1, false, true);
+  previousCard: Card = new Card(-1, false, true);
 
-  private cards!: Card[];
+  money: number = 100;
+
+  cards: Card[] = [];
+
+  // Cards that the player have taken from the deck already.
+  pulledCards: Card[] = [];
 
   // currentBetInformation and playerName are public because
   // they need to be binded to input boxes
-  public currentBetInformation: Bet = {
+  currentBetInformation: Bet = {
     nextCardHigher: false,
     wonPrevious: false,
-    value: 0
+    value: -1,
   };
-  public playerName!: string;
 
-  private canPlayerBet!: boolean;
+  playerName: string = "Player";
+  canPlayerBet: boolean = false;
 
+  // When the webpage is opened, generate the deck of cards.
+  // The "mounted" hook is ran when the webpage is opened, similar to window.onload
+  @Hook()
   mounted() {
     const totalAmountOfCards = 30;
-
-    // Initialize all the nessecary information for the
-    // game to start.
-    this.playerName = "Player"
-    this.cards = [];
-    this.canPlayerBet = false;
-    this.money = 100;
-
-    // A card of -1 is used to show that the variable isn't being used.
-    this.previousCard = new Card(-1, false, false);
-    this.currentCard = new Card(-1, false, false);
-
-    this.currentStage = GameStage.Welcome;
 
     // Create two decks of cards, each containing 15 cards and a 2 in 10 chance of
     // being a bonus card.
     for (let deckLevel = 0; deckLevel < 2; deckLevel++) {
       const isUpperDeck = deckLevel == 1;
-      for (let cardNumber = 0; cardNumber < totalAmountOfCards / 2; cardNumber++) {
-        const isCardBonus = (Math.floor(Math.random() * 10) < 2);
-        const card = new Card(cardNumber, isCardBonus, isUpperDeck)
+      for (
+        let cardNumber = 0;
+        cardNumber < totalAmountOfCards / 2;
+        cardNumber++
+      ) {
+        const isCardBonus = Math.floor(Math.random() * 10) < 2;
+        const card = new Card(cardNumber, isCardBonus, isUpperDeck);
         this.cards.push(card);
       }
     }
@@ -83,33 +86,54 @@ export default class Game extends Vue {
 
   public showNextCard(): void {
     this.previousCard = this.currentCard;
+
+    if (this.previousCard.getValue() != -1) {
+      // If the previous card is an actual card, push it to the pulled deck array.
+      this.pulledCards.push(this.previousCard);
+    }
+
     // A card of -1 is used to show that the variable isn't being used.
     this.currentCard = this.cards.pop() ?? new Card(-1, false, false);
 
     // Ensure that a current and previous card actually exist.
-    if (this.getCurrentBetValue() != -1 && this.hasCurrentCard() && this.hasPreviousCard()) {
+    if (
+      this.currentBetInformation.value != -1 &&
+      this.hasCurrentCard &&
+      this.hasPreviousCard
+    ) {
       // If the user bet the next card is higher, and it is higher - handle the bet as a win.
-      if (this.currentCard.getValue() > this.previousCard.getValue() && this.currentBetInformation.nextCardHigher) {
-        this.handleBetWin()
+      if (
+        this.currentCard.isCardHigher(this.previousCard) &&
+        this.currentBetInformation.nextCardHigher
+      ) {
+        this.handleBetWin();
+        return;
       }
 
       // If the user bet the next card is lower, and it is lower - handle the bet as a win.
-      if (this.currentCard.getValue() < this.previousCard.getValue() && !this.currentBetInformation.nextCardHigher) {
+      if (
+        this.currentCard.isCardLower(this.previousCard) &&
+        !this.currentBetInformation.nextCardHigher
+      ) {
         this.handleBetWin();
+        return;
       }
 
       // If there is no money left, or there are no cards left, end the game
       // and reveal any cards that were left.
       if (this.money < 1 || this.cards.length == 0) {
-        this.currentStage = GameStage.GameOver;
-        this.cards.forEach(card => card.show())
+        this.currentStage = "gameover";
+        this.cards.forEach((card) => card.show());
         return;
       }
     }
+
+    this.canPlayerBet = true;
+    this.currentBetInformation.value = 1;
   }
 
   public startGame(): void {
-    this.currentStage = GameStage.PlayerCreation;
+    this.currentStage = "player-creation";
   }
 
   public continueAfterWinningBet(): void {
@@ -122,53 +146,17 @@ export default class Game extends Vue {
     this.canPlayerBet = false;
   }
 
-  public canPlayerCreateBet(): boolean {
-    return this.canPlayerBet;
-  }
-
-  public getCurrentStage(): GameStage {
-    return this.currentStage;
-  }
-
-  public getCards(): Card[] {
-    return this.cards;
-  }
-
-  public getMoney(): number {
-    return this.money;
-  }
-
-  public hasPreviousCard(): boolean {
+  public get hasPreviousCard(): boolean {
     return this.previousCard.getValue() != -1;
   }
 
-  public hasCurrentCard(): boolean {
+  public get hasCurrentCard(): boolean {
     return this.currentCard.getValue() != -1;
-  }
-
-  public getPreviousCard(): Card {
-    return this.previousCard;
-  }
-
-  public getCurrentCard(): Card {
-    return this.currentCard;
-  }
-
-  public getCurrentBetValue(): number {
-    return this.currentBetInformation.value;
-  }
-
-  public haveWonPreviousBet(): boolean {
-    return this.currentBetInformation.wonPrevious;
-  }
-
-  public hasBetNextCardHigher(): boolean {
-    return this.currentBetInformation.nextCardHigher;
   }
 
   public setPlayerName(_name: string): void {
     this.playerName = _name;
-    this.currentStage = GameStage.Gameplay;
+    this.currentStage = "gameplay";
   }
 
   private shuffleCards() {
@@ -191,37 +179,67 @@ export default class Game extends Vue {
     }
   }
 }
-
 </script>
 
 <template>
-  <div v-if="getCurrentStage() == 'welcome'">
-    <h3>Cards left in deck - {{ getCards().length }}</h3>
-    <h3>Your balance - £{{ getMoney() }}</h3>
-    <div class="deck">
-      <div class="deck">
+  <div v-if="currentStage == 'gameplay'">
+    <h3>Cards left in deck: {{ cards.length }}</h3>
+    <h3>Your balance: £{{ money }}</h3>
+    <h4>10-Deck Card History</h4>
+    <p>The previous 10 cards that have been pulled from the deck.</p>
+    <div class="row">
+      <div
+        :class="`card ${card.isFromUpperDeck() ? 'card-upper-deck' : ''}`"
+        v-for="card in pulledCards"
+      >
+        <h1>{{ card.getValue() }}{{ card.isBonus() ? "*" : "" }}</h1>
+      </div>
+    </div>
+    <div class="row">
+      <!-- Previous and current card. -->
+      <div class="row">
         <div>
           <h4>Previous Card</h4>
-          <div v-if="hasPreviousCard()">
+          <div
+            :class="`card ${
+              previousCard.isFromUpperDeck() ? 'card-upper-deck' : ''
+            }`"
+            v-if="hasPreviousCard"
+          >
             <h1>
-              {{ getPreviousCard().getValue()
-              }}{{ getPreviousCard().isBonus() ? "*" : "" }}
+              {{ previousCard.getValue()
+              }}{{ previousCard.isBonus() ? "*" : "" }}
             </h1>
           </div>
-          <div class="card" v-else></div>
+          <div
+            :class="`card ${
+              previousCard.isFromUpperDeck() ? 'card-upper-deck' : ''
+            }`"
+            v-else
+          ></div>
         </div>
         <div>
           <h4>Current Card</h4>
-          <div class="card" v-if="hasCurrentCard()">
+          <div
+            :class="`card ${
+              currentCard.isFromUpperDeck() ? 'card-upper-deck' : ''
+            }`"
+            v-if="hasCurrentCard"
+          >
             <h1>
-              {{ getCurrentCard().getValue()
-              }}{{ getCurrentCard().isBonus() ? "*" : "" }}
+              {{ currentCard.getValue() }}{{ currentCard.isBonus() ? "*" : "" }}
             </h1>
           </div>
-          <div class="card" v-else></div>
+          <div
+            :class="`card ${
+              currentCard.isFromUpperDeck() ? 'card-upper-deck' : ''
+            }`"
+            v-else
+          ></div>
         </div>
       </div>
-      <div v-if="canPlayerCreateBet()">
+      <!-- This is shown when the player can make a bet. -->
+      <div v-if="canPlayerBet">
         <h4>Bet</h4>
         <p>Enter a bet that the next card is higher or lower...</p>
         <h5>Bet Amount</h5>
@@ -231,15 +249,12 @@ export default class Game extends Vue {
         <input
           v-model="currentBetInformation.value"
           min="1"
-          :max="getMoney()"
+          :max="money"
           type="number"
         />
         <h5>Higher Or Lower?</h5>
         <div class="higherLowerSelection">
           <div>
-            <!-- 
-              currentBetInformation has to be public to allow Vue to bind this input box to the variable.
-            -->
             <input
               id="isCardHigherCheckbox"
               v-model="currentBetInformation.nextCardHigher"
@@ -248,8 +263,8 @@ export default class Game extends Vue {
             <label for="isCardHigherCheckbox"> Higher </label>
           </div>
           <div>
-            <!-- 
-              currentBetInformation has to be public to allow Vue to bind this input box to the variable.
+            <!-- Flip the values of true and false, so when the user
+              clicks this checkbox, it unchecks the other, and vice versa.
             -->
             <input
               id="isCardLowerCheckbox"
@@ -265,88 +280,73 @@ export default class Game extends Vue {
         <button @click="submitBet">Submit Bet</button>
       </div>
 
-      <div v-if="!canPlayerCreateBet() && getCurrentBetValue() != -1">
-        <div v-if="haveWonPreviousBet()">
+      <div v-if="!canPlayerBet && currentBetInformation.value != -1">
+        <div v-if="currentBetInformation.wonPrevious">
           <h4>You won your bet!</h4>
           <p>
             You bet that the next card will be
-            <strong>{{ hasBetNextCardHigher() ? "higher" : "lower" }}</strong
+            <strong>{{
+              currentBetInformation.nextCardHigher ? "higher" : "lower"
+            }}</strong
             >.
           </p>
           <p>
-            <strong>£{{ getCurrentBetValue() }}</strong> has been added into
-            your balance.
+            <strong>£{{ currentBetInformation.value }}</strong> has been added
+            into your balance.
           </p>
           <button @click="continueAfterWinningBet">Continue</button>
         </div>
         <div v-else>
           <h4>Current Bet</h4>
           <p>
-            You bet <strong>£{{ getCurrentBetValue() }}</strong> that the next
-            card will be
-            <strong>{{ hasBetNextCardHigher() ? "higher" : "lower" }}</strong
+            You bet <strong>£{{ currentBetInformation.value }}</strong> that the
+            next card will be
+            <strong>{{
+              currentBetInformation.nextCardHigher ? "higher" : "lower"
+            }}</strong
             >.
           </p>
         </div>
       </div>
     </div>
     <button
-      v-if="!canPlayerCreateBet() && !haveWonPreviousBet()"
+      v-if="!canPlayerBet && !currentBetInformation.wonPrevious"
       @click="showNextCard()"
     >
       Show Next Card
     </button>
   </div>
-  <div v-if="getCurrentStage() === 'welcome'">
-    <h3>Information</h3>
-    <ul>
-      <li>The game involves a deck of thirty cards.</li>
-      <li>Each card is hidden, you do not know it's value.</li>
-      <li>You start the game with <strong>£100</strong></li>
-      <li>
-        You can bet that the next card is higher or lower than the previous
-        card.
-      </li>
-      <li>
-        If you are right, your bet is doubled and returned back to your balance.
-      </li>
-      <li>
-        Cards with a <strong>*</strong> next to their number are bonus cards,
-        these cards quadruple your bet.
-      </li>
-    </ul>
-    <button @click="startGame()">Start Game</button>
-  </div>
-  <div v-if="getCurrentStage() === 'player-creation'">
+  <GameInformation @startGame="startGame" v-if="currentStage == 'welcome'" />
+  <div v-if="currentStage == 'player-creation'">
     <p>Please enter your name.</p>
     <input v-model="playerName" type="text" />
     <button @click="setPlayerName(playerName)">Continue</button>
   </div>
-  <div v-if="getCurrentStage() === 'gameover'">
+  <div v-if="currentStage == 'gameover'">
     <h3>Game Over</h3>
-    <div v-if="getCards().length == 0">
+    <div v-if="cards.length == 0">
       <p>You emptied the deck!</p>
       <p>
-        Your final balance was <strong>£{{ getMoney() }}</strong>
+        Your final balance was <strong>£{{ money }}</strong>
       </p>
     </div>
     <div v-else>
       <p>You ran out of money...</p>
       <p>
-        You had <strong>{{ getCards().length }}</strong> cards left in the deck.
+        You had <strong>{{ cards.length }}</strong> cards left in the deck.
       </p>
       <div class="card-row">
         <div>
           <h4>Previous Card</h4>
           <div
             :class="`card ${
-              getPreviousCard().isFromUpperDeck() ? 'card-upper-deck' : ''
+              previousCard.isFromUpperDeck() ? 'card-upper-deck' : ''
             }`"
-            v-if="hasPreviousCard()"
+            v-if="hasPreviousCard"
           >
             <h1>
-              {{ getPreviousCard().getValue()
-              }}{{ getPreviousCard().isBonus() ? "*" : "" }}
+              {{ previousCard.getValue()
+              }}{{ previousCard.isBonus() ? "*" : "" }}
             </h1>
           </div>
           <div class="card" v-else>N/A</div>
@@ -355,13 +355,12 @@ export default class Game extends Vue {
           <h4>Current Card</h4>
           <div
             :class="`card ${
-              getCurrentCard().isFromUpperDeck() ? 'card-upper-deck' : ''
+              currentCard.isFromUpperDeck() ? 'card-upper-deck' : ''
             }`"
-            v-if="hasCurrentCard()"
+            v-if="hasCurrentCard"
           >
             <h1>
-              {{ getCurrentCard().getValue()
-              }}{{ getCurrentCard().isBonus() ? "*" : "" }}
+              {{ currentCard.getValue() }}{{ currentCard.isBonus() ? "*" : "" }}
             </h1>
           </div>
           <div class="card" v-else>N/A</div>
@@ -370,36 +369,3 @@ export default class Game extends Vue {
     </div>
   </div>
 </template>
-
-<style scoped>
-.card {
-  transition: 0.2s;
-  display: flex;
-  width: 120px;
-  border-color: black;
-  background-color: #b1ff9c;
-  border-style: solid;
-  height: 190px;
-}
-
-.card-upper-deck {
-  background-color: #ffa39e;
-}
-
-.card > h1,
-.card > h2,
-.card > h3 {
-  text-align: center;
-  margin: auto;
-}
-
-/* The switch - the box around the slider */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-/* Hide default HTML checkbox */
-</style>
