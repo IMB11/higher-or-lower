@@ -1,11 +1,12 @@
 <script lang="ts">
+import { Component, Vue, Hook } from "vue-facing-decorator";
+
 import type Bet from "../bet";
 import Card from "../card";
 
-import { Component, Vue, Hook } from "vue-facing-decorator";
-
 import GameInformation from "./GameInformation.vue";
 import BetInput from "./BetInput.vue";
+import GameOverInformation from "./GameOverInformation.vue";
 
 type GameStage = "welcome" | "player-creation" | "gameplay" | "gameover";
 
@@ -13,10 +14,11 @@ type GameStage = "welcome" | "player-creation" | "gameplay" | "gameover";
   // Mark other classes/components here so we aggregate them.
   components: {
     GameInformation,
+    GameOverInformation,
     BetInput,
   },
 })
-export default class Game extends Vue {
+export default class GameComponent extends Vue {
   currentStage: GameStage = "welcome";
 
   // A card of -1 is used to show that the variable isn't being used.
@@ -322,50 +324,13 @@ export default class Game extends Vue {
     <input v-model="playerName" type="text" />
     <button @click="setPlayerName(playerName)">Continue</button>
   </div>
-  <div v-if="currentStage == 'gameover'">
-    <h3>Game Over</h3>
-    <div v-if="cards.length == 0">
-      <p>You emptied the deck!</p>
-      <p>
-        Your final balance was <strong>£{{ money }}</strong>
-      </p>
-    </div>
-    <div v-else>
-      <p>You ran out of money...</p>
-      <p>
-        You had <strong>{{ cards.length }}</strong> cards left in the deck.
-      </p>
-      <div class="card-row">
-        <div>
-          <h4>Previous Card</h4>
-          <div
-            :class="`card ${
-              previousCard.isFromUpperDeck() ? 'card-upper-deck' : ''
-            }`"
-            v-if="hasPreviousCard"
-          >
-            <h1>
-              {{ previousCard.getValue()
-              }}{{ previousCard.isBonus() ? "*" : "" }}
-            </h1>
-          </div>
-          <div class="card" v-else>N/A</div>
-        </div>
-        <div>
-          <h4>Current Card</h4>
-          <div
-            :class="`card ${
-              currentCard.isFromUpperDeck() ? 'card-upper-deck' : ''
-            }`"
-            v-if="hasCurrentCard"
-          >
-            <h1>
-              {{ currentCard.getValue() }}{{ currentCard.isBonus() ? "*" : "" }}
-            </h1>
-          </div>
-          <div class="card" v-else>N/A</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <GameOverInformation
+    :cards="cards"
+    :currentCard="currentCard"
+    :hasCurrentCard="hasCurrentCard"
+    :hasPreviousCard="hasPreviousCard"
+    :previousCard="previousCard"
+    :money="money"
+    v-if="currentStage == 'gameover'"
+  />
 </template>
