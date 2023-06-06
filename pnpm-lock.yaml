@@ -7,6 +7,12 @@ dependencies:
   vue:
     specifier: ^3.3.2
     version: 3.3.2
+  vue-class-component:
+    specifier: ^7.2.6
+    version: 7.2.6(vue@3.3.2)
+  vue-facing-decorator:
+    specifier: ^2.1.20
+    version: 2.1.20(vue@3.3.2)
 
 devDependencies:
   '@tsconfig/node18':
@@ -1256,6 +1262,22 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
+
+  /vue-class-component@7.2.6(vue@3.3.2):
+    resolution: {integrity: sha512-+eaQXVrAm/LldalI272PpDe3+i4mPis0ORiMYxF6Ae4hyuCh15W8Idet7wPUEs4N4YptgFHGys4UrgNQOMyO6w==}
+    peerDependencies:
+      vue: ^2.0.0
+    dependencies:
+      vue: 3.3.2
+    dev: false
+
+  /vue-facing-decorator@2.1.20(vue@3.3.2):
+    resolution: {integrity: sha512-Xv987Q+XhhWTPXxzG4HllHxckMahV04wDcRebdd/AWlU/hYm7+tGRo2eD84mpl3rZLZQ74Cr41UlWbGbEQptNA==}
+    peerDependencies:
+      vue: ^3.0.0
+    dependencies:
+      vue: 3.3.2
+    dev: false
 
   /vue-template-compiler@2.7.14:
     resolution: {integrity: sha512-zyA5Y3ArvVG0NacJDkkzJuPQDF8RFeRlzV2vLeSnhSpieO6LK2OVbdLPi5MPPs09Ii+gMO8nY4S3iKQxBxDmWQ==}
