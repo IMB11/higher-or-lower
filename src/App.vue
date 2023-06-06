@@ -1,17 +1,17 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import Game from "./components/Game.vue";
+import GameComponent from "./components/GameComponent.vue";
 
 export default defineComponent({
   components: {
-    Game,
+    Game: GameComponent,
   },
 });
 </script>
 
 <template>
   <h1>Higher or Lower</h1>
-  <Game />
+  <GameComponent />
 </template>
 
 <style scoped></style>

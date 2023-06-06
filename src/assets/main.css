@@ -1,7 +1,23 @@
-#app {
+body {
+  /* Make the body of the website not cling to the side of the screen. */
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   font-family: sans-serif;
   font-weight: normal;
 }
+
+/* Betting Section */
+
+/* 
+  Make the div containing the checkboxes 
+  align children vertically instead of 
+  horizontal. 
+*/
+.higherLowerSelection {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card */
+
