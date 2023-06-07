@@ -5,7 +5,6 @@ import type Bet from "../bet";
 import Card from "../card";
 
 import GameInformation from "./GameInformation.vue";
-import BetInput from "./BetInput.vue";
 import GameOverInformation from "./GameOverInformation.vue";
 
 type GameStage = "welcome" | "player-creation" | "gameplay" | "gameover";
@@ -14,8 +13,7 @@ type GameStage = "welcome" | "player-creation" | "gameplay" | "gameover";
   // Mark other classes/components here so we aggregate them.
   components: {
     GameInformation,
-    GameOverInformation,
-    BetInput,
+    GameOverInformation
   },
 })
 export default class GameComponent extends Vue {

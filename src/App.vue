@@ -1,12 +1,5 @@
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import GameComponent from "./components/GameComponent.vue";
-
-export default defineComponent({
-  components: {
-    GameComponent,
-  },
-});
 </script>
 
 <template>
